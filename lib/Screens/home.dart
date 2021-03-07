@@ -17,23 +17,19 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> {
-  Quote quote = Quote(id: 1, author: "", quote: "");
+  Quote quote = Quote(id: 1, author: "", quote: "", liked: false);
   bool showSpinner = false;
   final DataCacheService data;
 
   _HomeState({this.data});
   bool liked = false;
-  String _networkStatus = '';
 
   Connectivity connectivity = Connectivity();
 
-  void checkConnectivity1() async {
-    print('test');
+  Future<String> checkConnectivity1() async {
     var connectivityResult = await connectivity.checkConnectivity();
-    var conn = getConnectionValue(connectivityResult);
-    setState(() {
-      _networkStatus = 'Check Connection:: ' + conn;
-    });
+
+    return getConnectionValue(connectivityResult);
   }
 
   String getConnectionValue(var connectivityResult) {
@@ -60,20 +56,37 @@ class _HomeState extends State<Home> {
   Future<void> initState() {
     // TODO: implement initState
     super.initState();
-    getQuote();
+    getLastQuote();
+  }
+
+  void getLastQuote() async {
+    var lastQuote = await data.getLastQuote() as Quote;
+    print(lastQuote.quote);
+    if (lastQuote.liked != null) {
+      setState(() {
+        quote = lastQuote;
+        liked = quote.liked;
+      });
+    } else {
+      getQuote();
+    }
   }
 
   void getQuote() async {
-    setState(() {
-      showSpinner = true;
-    });
-    var newQuote = await API.getQuote();
-    var data1 = await data.getLastQuote() as Quote;
-    print(data1.quote);
-    setState(() {
-      showSpinner = false;
-      quote = newQuote;
-    });
+    String status = await checkConnectivity1();
+
+    if (status != 'None') {
+      setState(() {
+        showSpinner = true;
+        liked = false;
+      });
+      var newQuote = await API.getQuote();
+      data.setLastQuote(quote);
+      setState(() {
+        showSpinner = false;
+        quote = newQuote;
+      });
+    }
   }
 
   @override
@@ -187,6 +200,7 @@ class _HomeState extends State<Home> {
                           setState(() {
                             data.setData(LikedQuote.likedQuote);
                             liked = !liked;
+                            data.setIsLiked(liked);
                           });
                         },
                       ),
@@ -197,12 +211,7 @@ class _HomeState extends State<Home> {
                           size: 32,
                         ),
                         onPressed: () async {
-                          checkConnectivity1();
-                          data.setLastQuote(quote);
                           getQuote();
-                          setState(() {
-                            liked = false;
-                          });
                         },
                       ),
                     ],
@@ -224,7 +233,7 @@ class _HomeState extends State<Home> {
         return AlertDialog(
           content: Container(
             decoration: BoxDecoration(
-              color: Colors.white.withAlpha(50),
+              color: Colors.white.withAlpha(100),
               borderRadius: BorderRadius.circular(40),
             ),
             width: MediaQuery.of(context).size.width * 0.50,

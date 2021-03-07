@@ -17,7 +17,7 @@ class DataCacheService {
         final ID = sharedPreferences.getString("${x}/ID");
         final quote = sharedPreferences.getString('${x}/quote');
         final author = sharedPreferences.getString('${x}/author');
-        print(ID);
+
         values.add(
             Quote(id: int.parse(ID.toString()), quote: quote, author: author));
       }
@@ -30,7 +30,6 @@ class DataCacheService {
   Future<void> setData(List<Quote> quoteList) async {
     int x = 0;
     for (var value in quoteList) {
-      print('ID: ${value.id}');
       await sharedPreferences.setString(
           '${x.toString()}/ID', value.id.toString());
       await sharedPreferences.setString('${x.toString()}/quote', value.quote);
@@ -46,8 +45,13 @@ class DataCacheService {
       final lastQuote = prefs.get("Quote");
       final lastQuoteAuthor = prefs.getString("Author");
       final lastQuoteId = prefs.getInt("Id");
-
-      return Quote(id: lastQuoteId, author: lastQuoteAuthor, quote: lastQuote);
+      final isLiked = prefs.getBool("Liked");
+      print(isLiked);
+      return Quote(
+          id: lastQuoteId,
+          author: lastQuoteAuthor,
+          quote: lastQuote,
+          liked: isLiked);
     } catch (e) {
       print(e);
     }
@@ -59,5 +63,11 @@ class DataCacheService {
     await prefs.setString("Quote", quote.quote);
     await prefs.setString("Author", quote.author);
     await prefs.setInt("Id", quote.id);
+    await prefs.setBool("Liked", quote.liked);
+  }
+
+  setIsLiked(bool liked) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool("Liked", liked);
   }
 }

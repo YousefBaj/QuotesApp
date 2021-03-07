@@ -12,6 +12,11 @@ class API {
     );
 
     var data = json.decode(response.body);
-    return Quote(id: data['id'], author: data['author'], quote: data['quote']);
+    return Quote(
+      id: data['id'],
+      author: data['author'],
+      quote: data['quote'],
+      liked: false,
+    );
   }
 }

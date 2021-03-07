@@ -26,7 +26,6 @@ class _LikedQuotesScreenState extends State<LikedQuotesScreen> {
   }
 
   void getAllData() async {
-    print(data);
     var tempList = await data.getData();
     print(tempList);
     setState(() {
@@ -134,6 +133,7 @@ class _LikedQuotesScreenState extends State<LikedQuotesScreen> {
                     onPressed: () {
                       setState(() {
                         _removeLikedQout(quote, index);
+                        data.setIsLiked(false);
                         data.setData(likedQuoteList);
                         LikedQuote.removeFromList(quote);
                       });
