@@ -1,18 +1,27 @@
 import 'package:connectivity/connectivity.dart';
 import 'package:flutter/material.dart';
+import 'package:modal_progress_hud/modal_progress_hud.dart';
 import 'package:quotes/API/api.dart';
 import 'package:quotes/Screens/LikedQuoteScreen.dart';
 import 'package:quotes/model/likedQuote.dart';
 import 'package:quotes/model/quote.dart';
 
+import 'package:quotes/Service/dataCacheService.dart';
+
 class Home extends StatefulWidget {
   static const String id = 'Home';
+  DataCacheService data;
+  Home({this.data});
   @override
-  _HomeState createState() => _HomeState();
+  _HomeState createState() => _HomeState(data: data);
 }
 
 class _HomeState extends State<Home> {
-  Quote quote = Quote(id: 1, author: "yousef", quote: "test");
+  Quote quote = Quote(id: 1, author: "", quote: "");
+  bool showSpinner = false;
+  final DataCacheService data;
+
+  _HomeState({this.data});
   bool liked = false;
   String _networkStatus = '';
 
@@ -48,21 +57,29 @@ class _HomeState extends State<Home> {
   }
 
   @override
-  void initState() {
+  Future<void> initState() {
     // TODO: implement initState
     super.initState();
     getQuote();
   }
 
   void getQuote() async {
-    var data = await API.getQuote();
     setState(() {
-      quote = data;
+      showSpinner = true;
+    });
+    var newQuote = await API.getQuote();
+    var data1 = await data.getLastQuote() as Quote;
+    print(data1.quote);
+    setState(() {
+      showSpinner = false;
+      quote = newQuote;
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    final height = MediaQuery.of(context).size.height;
+    final width = MediaQuery.of(context).size.width;
     return Scaffold(
       appBar: AppBar(
         actions: [
@@ -82,105 +99,116 @@ class _HomeState extends State<Home> {
         elevation: 0,
       ),
       backgroundColor: Colors.teal,
-      body: Center(
-        child: Container(
-          height: MediaQuery.of(context).size.height,
-          width: MediaQuery.of(context).size.width,
-          child: Padding(
-            padding: const EdgeInsets.only(
-              left: 8.0,
-              right: 8.0,
-              bottom: 32,
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  child: Image.asset(
-                    "assets/images/quote-left.png",
-                    color: Colors.white.withOpacity(0.4),
+      body: ModalProgressHUD(
+        inAsyncCall: showSpinner,
+        opacity: 0.5,
+        progressIndicator: CircularProgressIndicator(
+          backgroundColor: Colors.transparent,
+          valueColor: new AlwaysStoppedAnimation<Color>(Colors.white),
+          strokeWidth: 5,
+        ),
+        child: Center(
+          child: Container(
+            height: height,
+            width: width,
+            child: Padding(
+              padding: const EdgeInsets.only(
+                left: 8.0,
+                right: 8.0,
+                bottom: 32,
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    child: Image.asset(
+                      "assets/images/quote-left.png",
+                      color: Colors.white.withOpacity(0.4),
+                    ),
+                    width: width * 0.25,
+                    height: width * 0.25,
                   ),
-                  width: 100,
-                  height: 100,
-                ),
-                SizedBox(
-                  height: 50,
-                ),
-                Column(
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Text(
-                        quote.quote,
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontFamily: "notoSans",
-                          color: Colors.white,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                    SizedBox(
-                      height: 40,
-                    ),
-                    Container(
-                      width: MediaQuery.of(context).size.width,
-                      child: Padding(
+                  SizedBox(
+                    height: height * 0.02,
+                  ),
+                  Column(
+                    children: [
+                      Padding(
                         padding: const EdgeInsets.all(8.0),
                         child: Text(
-                          "___" + quote.author,
+                          quote.quote,
                           style: TextStyle(
-                            fontSize: 16,
-                            fontFamily: 'notoSans',
-                            color: Colors.white70,
+                            fontSize: 18,
+                            fontFamily: "notoSans",
+                            color: Colors.white,
+                            fontWeight: FontWeight.w500,
                           ),
-                          textAlign: TextAlign.end,
                         ),
                       ),
-                    ),
-                    SizedBox(
-                      height: 80,
-                    ),
-                  ],
-                ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    IconButton(
-                      icon: Icon(
-                        liked
-                            ? Icons.favorite_rounded
-                            : Icons.favorite_border_rounded,
-                        color: Colors.white,
-                        size: 32,
+                      SizedBox(
+                        height: height * 0.05,
                       ),
-                      onPressed: () {
-                        liked
-                            ? LikedQuote.removeFromList(quote)
-                            : LikedQuote.addtoList(quote);
-                        setState(() {
-                          liked = !liked;
-                        });
-                      },
-                    ),
-                    IconButton(
-                      icon: Icon(
-                        Icons.refresh,
-                        color: Colors.white,
-                        size: 32,
+                      Container(
+                        width: MediaQuery.of(context).size.width,
+                        child: Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Text(
+                            "- " + quote.author,
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontFamily: 'notoSans',
+                              color: Colors.white70,
+                            ),
+                            textAlign: TextAlign.end,
+                          ),
+                        ),
                       ),
-                      onPressed: () async {
-                        checkConnectivity1();
-                        getQuote();
-                        setState(() {
-                          liked = false;
-                        });
-                      },
-                    ),
-                  ],
-                ),
-              ],
+                      SizedBox(
+                        height: height * 0.05,
+                      ),
+                    ],
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      IconButton(
+                        icon: Icon(
+                          liked
+                              ? Icons.favorite_rounded
+                              : Icons.favorite_border_rounded,
+                          color: Colors.white,
+                          size: 32,
+                        ),
+                        onPressed: () {
+                          liked
+                              ? LikedQuote.removeFromList(quote)
+                              : LikedQuote.addtoList(quote);
+                          setState(() {
+                            data.setData(LikedQuote.likedQuote);
+                            liked = !liked;
+                          });
+                        },
+                      ),
+                      IconButton(
+                        icon: Icon(
+                          Icons.refresh,
+                          color: Colors.white,
+                          size: 32,
+                        ),
+                        onPressed: () async {
+                          checkConnectivity1();
+                          data.setLastQuote(quote);
+                          getQuote();
+                          setState(() {
+                            liked = false;
+                          });
+                        },
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
         ),
