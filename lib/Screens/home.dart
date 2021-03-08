@@ -3,10 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:modal_progress_hud/modal_progress_hud.dart';
 import 'package:quotes/API/api.dart';
 import 'package:quotes/Screens/LikedQuoteScreen.dart';
+import 'package:quotes/Service/dataCacheService.dart';
 import 'package:quotes/model/likedQuote.dart';
 import 'package:quotes/model/quote.dart';
-
-import 'package:quotes/Service/dataCacheService.dart';
 
 class Home extends StatefulWidget {
   static const String id = 'Home';
@@ -61,8 +60,8 @@ class _HomeState extends State<Home> {
 
   void getLastQuote() async {
     var lastQuote = await data.getLastQuote() as Quote;
-    print(lastQuote.quote);
-    if (lastQuote.liked != null) {
+    print('test');
+    if (lastQuote.quote != null) {
       setState(() {
         quote = lastQuote;
         liked = quote.liked;
@@ -81,7 +80,7 @@ class _HomeState extends State<Home> {
         liked = false;
       });
       var newQuote = await API.getQuote();
-      data.setLastQuote(quote);
+      data.setLastQuote(newQuote);
       setState(() {
         showSpinner = false;
         quote = newQuote;
